@@ -1,0 +1,14 @@
+const VOLUNTEER_API='https://wzeetpoppcbytyriqzme.supabase.co/functions/v1/cr-volunteer-portal';
+const portalChoice=document.getElementById('portalChoice'),volunteerLogin=document.getElementById('volunteerLogin'),leaderLogin=document.getElementById('login'),volunteerPortal=document.getElementById('volunteerPortal');
+function showPortal(el){[portalChoice,volunteerLogin,leaderLogin,volunteerPortal].forEach(x=>{if(x)x.hidden=x!==el})}
+function portalEsc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function formatVolunteerDate(value){const d=new Date(value+'T12:00:00');return d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'})}
+document.getElementById('chooseVolunteer').onclick=()=>{showPortal(volunteerLogin);document.getElementById('volunteerPhone').focus()};
+document.getElementById('chooseLeader').onclick=()=>{showPortal(leaderLogin);document.getElementById('pin').focus()};
+document.getElementById('volunteerBack').onclick=()=>{document.getElementById('volunteerLoginMsg').textContent='';showPortal(portalChoice)};
+document.getElementById('leaderBack').onclick=()=>{document.getElementById('loginMsg').textContent='';showPortal(portalChoice)};
+document.getElementById('volunteerLogout').onclick=()=>{document.getElementById('volunteerPhone').value='';document.getElementById('myVolunteerSchedule').innerHTML='';showPortal(portalChoice)};
+async function volunteerPortalLogin(){const msg=document.getElementById('volunteerLoginMsg'),button=document.getElementById('volunteerLoginBtn');msg.textContent='';button.disabled=true;button.textContent='Loading…';try{const r=await fetch(VOLUNTEER_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:document.getElementById('volunteerPhone').value})});const j=await r.json();if(!r.ok)throw Error(j.error||'Unable to load schedule.');document.getElementById('volunteerHello').textContent='Hi, '+j.volunteer.name;const assignments=j.assignments||[];document.getElementById('myVolunteerSchedule').innerHTML=assignments.length?assignments.map(a=>`<article class="myAssignment" style="border-left-color:${portalEsc(a.team_color||'#e8892d')}"><div class="myAssignmentDate">${portalEsc(formatVolunteerDate(a.service_date))}</div><div class="myAssignmentTeam">${portalEsc(a.team_name)}</div><div class="myAssignmentRole">${portalEsc(a.position_label)}</div></article>`).join(''):'<div class="emptySchedule"><h3>You’re all caught up.</h3><p>You don’t have any upcoming volunteer assignments right now.</p></div>';showPortal(volunteerPortal)}catch(e){msg.textContent=e.message}finally{button.disabled=false;button.textContent='View My Schedule'}}
+document.getElementById('volunteerLoginBtn').onclick=volunteerPortalLogin;
+document.getElementById('volunteerPhone').onkeydown=e=>{if(e.key==='Enter')volunteerPortalLogin()};
+if(token){portalChoice.hidden=true;leaderLogin.hidden=false}
